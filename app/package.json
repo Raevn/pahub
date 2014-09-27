@@ -1,0 +1,8 @@
+{
+  "name"    : "pahub",
+  "version" : "0.0.0",
+  "main"    : "main.js",
+  "bundledDependencies" : [
+    "mkdirp"
+  ]
+}

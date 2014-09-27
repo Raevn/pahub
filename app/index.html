@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>PA Community Hub</title>
+		<link href="assets/css/pahub.css" rel="stylesheet" type="text/css">
+	</head>
+	<body>
+		<div id="container-header" class="container">
+			<div class="header-title" data-bind="text: model.current_loc_data()['COMMUNITY_HUB'] || 'COMMUNITY HUB'"></div>
+		</div>
+		<div id="container-tabs" class="container" data-bind="css:{'container-sections-minimised': pahub.api.gui.getSectionsBarMinimisedState()}">
+			<div id="wrapper-tabs" class="wrapper">
+				<!-- ko foreach: current_tabs -->
+					<!-- ko if: display_name || img_src -->
+						<div data-bind="attr: {id: 'tab-' + tab_id}, css: {'selected-tab': tab_id == model.active_tab_id()}, click: function(){model.setActiveTab(tab_id)}" class="tab">
+						<!-- ko if: img_src -->
+							<div class="tab-icon"><img data-bind="attr: {src: img_src}"></div>
+						<!-- /ko -->
+						<!-- ko if: display_name -->
+							<span class="tab-display-name" data-bind="text: model.current_loc_data()[loc_key] || display_name"></span> 
+						<!-- /ko --> 
+						</div>
+					<!-- /ko -->
+				<!-- /ko -->
+			</div>
+		</div>
+		<div id="container-sections" class="container" data-bind="css:{'container-sections-minimised': pahub.api.gui.getSectionsBarMinimisedState()}">		
+			<div id="container-sections-cont">	
+				<div id="wrapper-sections" class="wrapper">
+					<!-- ko foreach: sections -->
+						<div data-bind="attr: {id: 'section-' + section_id}, css: {'section-last': $index() == ($parent.sections().length - 1), 'selected-section': section_id == model.active_section_id()}, click: function(){model.setActiveSection(section_id)}" class="section">
+							<!-- ko if: img_src -->
+								<div class="section-icon"><img data-bind="attr: {src: img_src}"></div>
+							<!-- /ko -->
+							<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
+								<div class="section-display-name" data-bind="text: model.current_loc_data()[loc_key] || display_name"></div>
+							<!-- /ko -->
+						</div>
+					<!-- /ko -->
+				</div>
+			</div>
+		</div>
+		<div id="container-content" class="container" data-bind="css:{'container-sections-minimised': pahub.api.gui.getSectionsBarMinimisedState()}">	
+			<div id="wrapper-content" class="wrapper">
+			</div>
+		</div>
+		<div id="container-footer" class="container">
+			<!-- ko if: pahub.api.resource.isDownloading() -->
+				<div class='loading'><img style='float:left;' src='assets/img/loading.gif'><div class='loading-text' data-bind="text: 'Downloading ' + pahub.api.resource.currentDownload() + ' ...'"></div></div>
+			<!-- /ko -->
+		</div>
+		
+		<!-- not sure what this is about, but it makes it work. From mereth / atom-shell PAMM -->
+		<script>window.$ = window.jQuery = require('./assets/js/jquery-2.1.1.min.js');</script>
+		
+		<script src="assets/js/jquery-2.1.1.min.js" type="text/javascript"></script>
+		<script src="assets/js/jquery-ajax-blob-arraybuffer.js" type="text/javascript"></script>
+		<script src="assets/js/knockout-3.2.0.js" type="text/javascript"></script>
+		<script src="assets/js/pahub.js" type="text/javascript"></script>
+		<script src="assets/js/pahub-api.js"type="text/javascript" ></script>
+		<script src="assets/js/pahub-ko.js" type="text/javascript"></script>
+	</body>
+</html>
