@@ -18,6 +18,12 @@ body {
   font-size: 24px;
   margin-bottom: 10px;
 }
+.heading2 {
+  font-family: 'Sansation Bold';
+  color: #f9f9f9;
+  font-size: 20px;
+  margin-bottom: 5px;
+}
 #container-header {
   background-image: url('../img/pahub-title.png');
   height: 88px;
@@ -195,7 +201,7 @@ body {
   left: 80px;
 }
 .content {
-  color: #515151;
+  color: #888888;
   display: block;
   position: relative;
   top: 0px;
@@ -235,7 +241,7 @@ body {
   height: 60px;
 }
 .wrapper {
-  color: #515151;
+  color: #888888;
   display: block;
   position: relative;
   top: 0px;
