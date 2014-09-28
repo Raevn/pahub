@@ -28,16 +28,33 @@
 			<div id="container-sections-cont">	
 				<div id="wrapper-sections" class="wrapper">
 					<!-- ko foreach: sections -->
-						<div data-bind="attr: {id: 'section-' + section_id}, css: {'section-last': $index() == ($parent.sections().length - 1), 'selected-section': section_id == model.active_section_id()}, click: function(){model.setActiveSection(section_id)}" class="section">
-							<!-- ko if: img_src -->
-								<div class="section-icon"><img data-bind="attr: {src: img_src}"></div>
-							<!-- /ko -->
-							<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
-								<div class="section-display-name" data-bind="text: model.current_loc_data()[loc_key] || display_name"></div>
-							<!-- /ko -->
-						</div>
+						<!-- ko if: location == 'sections' -->
+							<div data-bind="attr: {id: 'section-' + section_id}, css: {'section-last': $index() == model.lastSection(), 'selected-section': section_id == model.active_section_id()}, click: function(){model.setActiveSection(section_id)}" class="section">
+								<!-- ko if: img_src -->
+									<div class="section-icon"><img data-bind="attr: {src: img_src}"></div>
+								<!-- /ko -->
+								<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
+									<div class="section-display-name" data-bind="text: model.current_loc_data()[loc_key] || display_name"></div>
+								<!-- /ko -->
+							</div>
+						<!-- /ko -->
 					<!-- /ko -->
 				</div>
+			</div>
+		</div>
+		<div id="container-sections-header" class="container">
+			<div id="container-sections-header-cont">
+				<div id="wrapper-sections-header" class="wrapper">
+					<!-- ko foreach: sections -->
+						<!-- ko if: location == 'header' -->
+							<div data-bind="attr: {id: 'section-' + section_id}, css: {'selected-section': section_id == model.active_section_id()}, click: function(){model.setActiveSection(section_id)}" class="section-header">
+								<!-- ko if: img_src -->
+									<div class="section-icon"><img data-bind="attr: {src: img_src}"></div>
+								<!-- /ko -->
+							</div>
+						<!-- /ko -->
+					<!-- /ko -->
+				</div>	
 			</div>
 		</div>
 		<div id="container-content" class="container" data-bind="css:{'container-sections-minimised': pahub.api.gui.getSectionsBarMinimisedState()}">	

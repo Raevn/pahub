@@ -12,7 +12,7 @@ $(document).ready(function () {
 		 *  GUI  *
 		 *********/
 		
-		self.sections_minimised = ko.observable(true);
+		self.sections_minimised = ko.observable(false);
 		
 		/***************
 		 *  RESOURCES  *
@@ -80,7 +80,7 @@ $(document).ready(function () {
 				status: "",
 				processed: ko.observable(false)
 			});
-			pahub.api.log.addLogMessage("debug", "<CID #" + self.connections + "> Queuing resource load: " + url);
+			pahub.api.log.addLogMessage("debug", "<CID #" + self.connections + "> Queuing resource load: " + getShortPathString(url));
 
 			if (local == true) {
 				setTimeout(function(resource) {self.downloadLocalResource(resource)}, 10, self.resource_queue()[self.resource_queue().length-1]);
@@ -153,7 +153,7 @@ $(document).ready(function () {
 					processed++;
 				}
 				i++;
-			} while (i < self.resource_queue().length);//&& (self.resource_queue()[i-1].processed() == true || self.resource_queue()[i-1].mode == "async")); //BUG! async needs to be checked inside
+			} while (i < self.resource_queue().length);
 			
 			if (processed == self.resource_queue().length) {
 				self.downloading(false)
@@ -392,9 +392,10 @@ $(document).ready(function () {
 		});
 		
 		
-		self.addSection = function (section_id, display_name, img_src) {
+		self.addSection = function (section_id, display_name, img_src, location, index) {
 			//TODO: Logging
 			//TODO: Validity Checking
+			//location: sections, header
 			
 			if (self.sectionExists(section_id) == false) {
 				self.sections.push({
@@ -402,7 +403,13 @@ $(document).ready(function () {
 					display_name: display_name,
 					loc_key: createLocKey(display_name),
 					img_src: img_src || null,
+					index: index,
+					location: location,
 					tabs: ko.observableArray()
+				});
+				
+				self.sections.sort(function(left, right) {
+					return left.index == right.index ? 0 : (left.index < right.index ? -1 : 1);
 				});
 				
 				if (self.active_section_id() == "") {
@@ -442,7 +449,17 @@ $(document).ready(function () {
 			}
 		}
 		
-		self.addTab = function (section_id, tab_id, display_name, img_src) {
+		self.lastSection = ko.computed(function() {
+			var last = 0;
+			for(var i =0; i < self.sections().length; i++) {
+				if (self.sections()[i].location == "sections") {
+					last = i;
+				}
+			}
+			return last;
+		})
+		
+		self.addTab = function (section_id, tab_id, display_name, img_src, index) {
 			//TODO: Logging
 			//TODO: Validity Checking
 			
@@ -455,9 +472,14 @@ $(document).ready(function () {
 						tab_id: tab_id,
 						display_name: display_name || null,
 						loc_key: createLocKey(display_name) || null,
-						img_src: img_src || null
+						img_src: img_src || null,
+						index: index
 					});
 				}
+				
+				section.tabs.sort(function(left, right) {
+					return left.index == right.index ? 0 : (left.index < right.index ? -1 : 1);
+				});
 				
 				$('#wrapper-content').append("<div id=\"content-" + section_id + "-" + tab_id + "\" data-bind=\"visible: model.active_section_id() == '" + section_id + "' && model.active_tab_id() == '" + tab_id + "'\" class=\"content\"></div>");
 

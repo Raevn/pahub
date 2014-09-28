@@ -1,12 +1,12 @@
 var pahub = {
 	api: {
 		section: {
-			addSection: function (section_id, display_name, img_src) { model.addSection(section_id, display_name, img_src); },
+			addSection: function (section_id, display_name, img_src, location, index) { model.addSection(section_id, display_name, img_src, location, index); },
 			removeSection: function (section_id) { model.removeSection(section_id); },
 			setActiveSection: function (section_id) { model.setActiveSection(section_id); }
 		},
 		tab: {
-			addTab: function (section_id, tab_id, display_name, img_src) { model.addTab(section_id, tab_id, display_name, img_src); },
+			addTab: function (section_id, tab_id, display_name, img_src, index) { model.addTab(section_id, tab_id, display_name, img_src, index); },
 			removeTab: function (section_id, tab_id) { model.removeTab(section_id, tab_id); },
 			setTabContent: function (section_id, tab_id, content) { model.setTabContent(section_id, tab_id, content); },
 			setActiveTab: function (tab_id) { model.setActiveTab(section_id); }
