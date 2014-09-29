@@ -25,6 +25,8 @@ function initPlatform() {
 	switch (process.platform) {
 		case 'win32': // Windows
 			setConstant("PA_DATA_DIR", path.join(process.env.USERPROFILE, "appdata/local/Uber Entertainment/Planetary Annihilation"));
+			setConstant("PAHUB_BASE_DIR", path.normalize(process.cwd()));
+			setConstant("PAHUB_PACKAGE_FILE", path.join(constant.PAHUB_BASE_DIR, "resources/app/package.json"));
 			break;
 		case 'linux': // Linux
 			//TODO
@@ -32,11 +34,13 @@ function initPlatform() {
 			break;
 		case 'darwin': // Mac OSX
 			//TODO
-			//setConstant("PA_DATA_DIR", path.join('', '')); 
+			setConstant("PA_DATA_DIR", path.join(process.env.HOME, 'Library/Application Support/Uber Entertainment/Planetary Annihilation')); 
+			// removing "MacOS/Atom Helper", leaving us at ..."Atom.app/Content"
+			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../..')));
+			// ..."Atom.app/Content/Resources"
+			setConstant("PAHUB_PACKAGE_FILE", path.join(process.resourcesPath, "app/package.json"));
 			break;
 	}
-	
-	setConstant("PAHUB_BASE_DIR", path.normalize(process.cwd()));
 	
 	if (fs.existsSync(constant.PA_DATA_DIR) == false) {
 		pahub.api.log.addLogMessage("verb", "PA_DATA_DIR folder not found, generating");
@@ -77,8 +81,6 @@ function initPlatform() {
 			]
 		});
 	}
-	
-	setConstant("PAHUB_PACKAGE_FILE", path.join(constant.PAHUB_BASE_DIR, "resources/app/package.json"));
 	
 	setConstant("PAHUB_LOG_FILE", path.join(constant.PA_DATA_DIR, "pahub/pahub-log.txt"));
 	pahub.api.log.writeLog();
