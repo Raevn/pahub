@@ -120,7 +120,11 @@ $(document).ready(function () {
 								}
 								
 								if (self.resource_queue()[i].action == "save") {
-									writeToFile(path.join(constant.PAHUB_CACHE_DIR, self.resource_queue()[i].saveas), new Buffer(new Uint8Array(self.resource_queue()[i].data)));
+									if (self.resource_queue()[i].hasOwnProperty("saveas") == true) {
+										writeToFile(path.join(constant.PAHUB_CACHE_DIR, self.resource_queue()[i].saveas), new Buffer(new Uint8Array(self.resource_queue()[i].data)));
+									} else {
+										writeToFile(path.join(constant.PAHUB_CACHE_DIR, path.basename(self.resource_queue()[i].url)), new Buffer(new Uint8Array(self.resource_queue()[i].data)));
+									}
 								}
 								
 								self.resource_queue()[i].processed(true);
@@ -321,7 +325,6 @@ $(document).ready(function () {
 							var success_func = null;
 							if (i == info.resources.length - 1) {							
 								pahub.api.resource.loadResource(path.join(folder, info.resources[i]), "load", {name:"Plugin resource: " + info.resources[i], success: function() {
-									pahub.api.log.addLogMessage("info", "Plugin '" + info.content_id + "' loaded");
 									if (info.hasOwnProperty("load_func")) {
 										if (typeof window[info.load_func] === 'function') {
 											pahub.api.log.addLogMessage("debug", "Calling load function for plugin '" + plugin_id + "': " + info.load_func);

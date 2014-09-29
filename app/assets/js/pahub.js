@@ -4,8 +4,16 @@ var mkdirp = require('mkdirp');
 
 var constant = {};
 
+var pahubConfig = {};
+var pahubPackage = {};
+
 function init() {
 	initPlatform();
+	
+	//TODO: change from master
+	setConstant("PAHUB_PACKAGE_URL", "https://raw.githubusercontent.com/raevn/pahub/master/app/package.json");
+	setConstant("PAHUB_UPDATE_URL", "https://github.com/raevn/pahub/archive/master.zip");
+	loadPackage();
 	loadConfig();
 }
 
@@ -70,31 +78,73 @@ function initPlatform() {
 		});
 	}
 	
+	setConstant("PAHUB_PACKAGE_FILE", path.join(constant.PAHUB_BASE_DIR, "resources/app/package.json"));
+	
 	setConstant("PAHUB_LOG_FILE", path.join(constant.PA_DATA_DIR, "pahub/pahub-log.txt"));
 	pahub.api.log.writeLog();
 }
 
+function loadPackage() {
+	pahub.api.log.addLogMessage("verb", "Loading PAHUB package file");
+	var packageJSON = readJSONfromFile(constant.PAHUB_PACKAGE_FILE);
+	
+	if (packageJSON != false) {
+		pahubPackage = packageJSON;
+		pahub.api.log.addLogMessage("info", "PA Hub version: " + pahubPackage.version);
+	} else {
+		//shouldn't ever get here.
+	}
+}
+
 //parses pahub-config.json, and loads core plugins
 function loadConfig() {
-	pahub.api.log.addLogMessage("info", "Loading PAHUB config file");
-	var config = readJSONfromFile(constant.PAHUB_CONFIG_FILE);
+	pahub.api.log.addLogMessage("verb", "Loading PAHUB config file");
+	var configJSON = readJSONfromFile(constant.PAHUB_CONFIG_FILE);
 	
-	if (config != false) {
-		if (config.hasOwnProperty("plugins_core") == true) {
-			if ($.isArray(config.plugins_core)) {
-				for(var i = 0; i < config.plugins_core.length; i++) {
-					pahub.api.log.addLogMessage("info", "Core plugin: '" + config.plugins_core[i] + "'");
-				}
-				for(var i = 0; i < config.plugins_core.length; i++) {
-					pahub.api.plugin.loadPlugin(path.join(constant.PAHUB_PLUGIN_DIR, config.plugins_core[i]), function(plugin) {
-						plugin.enabled = true;
-						model.core_plugins.push(plugin);
-						pahub.api.log.addLogMessage("info", "Core plugin '" + plugin.content_id + "': enabled");
-					});
-				}
-			} else {
-				pahub.api.log.addLogMessage("error", "Error processing PAHUB config file: 'plugins_core' not an array");
+	if (configJSON != false) {
+		pahubConfig = configJSON;
+		checkForUpdates(function() {
+			loadCorePlugins();
+		});
+	} else {
+		//error
+	}
+}
+
+function checkForUpdates(completed_func) {
+	pahub.api.resource.loadResource(constant.PAHUB_PACKAGE_URL, "save", {
+		saveas: "package.json", 
+		name: "PA Hub update information",
+		success: function(data) {
+			var onlinePackageJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, "package.json"));
+			if (onlinePackageJSON != false) {
+				var onlinePackage = onlinePackageJSON;
+				pahub.api.log.addLogMessage("info", "Latest PA Hub version: " + onlinePackageJSON.version);
 			}
+		},
+		fail: function(data) {
+			//error
+		},
+		always: function(data) {
+			completed_func();
+		}
+	});
+}
+
+function loadCorePlugins() {
+	if (pahubConfig.hasOwnProperty("plugins_core") == true) {
+		if ($.isArray(pahubConfig.plugins_core)) {
+			for(var i = 0; i < pahubConfig.plugins_core.length; i++) {
+				pahub.api.log.addLogMessage("info", "Found Core Plugin: '" + pahubConfig.plugins_core[i] + "'");
+			}
+			for(var i = 0; i < pahubConfig.plugins_core.length; i++) {
+				pahub.api.plugin.loadPlugin(path.join(constant.PAHUB_PLUGIN_DIR, pahubConfig.plugins_core[i]), function(plugin) {
+					plugin.enabled = true;
+					model.core_plugins.push(plugin);
+				});
+			}
+		} else {
+			pahub.api.log.addLogMessage("error", "Error processing PAHUB config file: 'plugins_core' not an array");
 		}
 	}
 }
@@ -153,14 +203,12 @@ function writeJSONtoFile(file, data) {
 }
 
 function writeToFile(file, data) {
-	pahub.api.log.addLogMessage("verb", "Writing to file");
-	pahub.api.log.addLogMessage("verb", "Path: " + getShortPathString(file));
+	pahub.api.log.addLogMessage("debug", "Writing to file: " + getShortPathString(file));
 	try {
 		fs.writeFileSync(file, data);
 		return true;
 	} catch(err) {
 		pahub.api.log.addLogMessage("error", "Error writing to file: " + err);
-		pahub.api.log.addLogMessage("error", "Path: " + getShortPathString(file));
 		return false;
 	}
 }
@@ -178,14 +226,17 @@ function appendToFile(file, data) {
 //Turns a long file path into a shorter one by substituting known folders for tags like <PAHUB_PLUGIN_DIR>.
 //Useful for logging
 function getShortPathString(url) {
-	var short_path = path.normalize(url)
-		.replace(constant.PAHUB_PLUGIN_DIR, "<PAHUB_PLUGIN_DIR>")
-		.replace(constant.PAHUB_CONTENT_DIR, "<PAHUB_CONTENT_DIR>")
-		.replace(constant.PAHUB_DATA_DIR, "<PAHUB_DATA_DIR>")
-		.replace(constant.PAHUB_CACHE_DIR, "<PAHUB_CACHE_DIR>")
-		.replace(constant.PA_DATA_DIR, "<PA_DATA_DIR>");
-	
-	return short_path;
+	if (typeof url == 'string') {
+		var short_path = url
+			.replace(constant.PAHUB_PLUGIN_DIR, "<PAHUB_PLUGIN_DIR>")
+			.replace(constant.PAHUB_CONTENT_DIR, "<PAHUB_CONTENT_DIR>")
+			.replace(constant.PAHUB_DATA_DIR, "<PAHUB_DATA_DIR>")
+			.replace(constant.PAHUB_CACHE_DIR, "<PAHUB_CACHE_DIR>")
+			.replace(constant.PA_DATA_DIR, "<PA_DATA_DIR>");
+		
+		return short_path;
+	} 
+	return "";
 }
 
 //Same as readFromFile, except it attempts to parse the result as a JSON object.
@@ -206,19 +257,16 @@ function readJSONfromFile(file) {
 
 function readFromFile(file) {
 	if (fs.existsSync(path.normalize(file)) == true) {
-		pahub.api.log.addLogMessage("verb", "Loading file");
-		pahub.api.log.addLogMessage("verb", "Path: " + getShortPathString(file));
+		pahub.api.log.addLogMessage("debug", "Loading file: " + getShortPathString(file));
 		try {
 			var readFile = fs.readFileSync(path.normalize(file));
 			return readFile;
 		} catch (err) {
 			pahub.api.log.addLogMessage("error", "Error loading file: " + err);
-			pahub.api.log.addLogMessage("error", "Path: " + getShortPathString(file));
 			return false;
 		}
 	} else {
-		pahub.api.log.addLogMessage("error", "Error loading file: File not found");
-		pahub.api.log.addLogMessage("error", "Path: " + getShortPathString(file));
+		pahub.api.log.addLogMessage("error", "Error loading file - File not found: " + getShortPathString(file));
 		return false;
 	}
 }
