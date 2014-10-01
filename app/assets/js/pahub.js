@@ -21,11 +21,11 @@ function initPlatform() {
 	var platform = "";
 	pahub.api.log.addLogMessage("info", "Detected architecture: " + process.arch);
 	pahub.api.log.addLogMessage("info", "Detected platform: " + process.platform);
-	
+
 	switch (process.platform) {
 		case 'win32': // Windows
 			setConstant("PA_DATA_DIR", path.join(process.env.USERPROFILE, "appdata/local/Uber Entertainment/Planetary Annihilation"));
-			setConstant("PAHUB_BASE_DIR", path.normalize(process.cwd()));
+			setConstant("PAHUB_BASE_DIR", path.dirname(process.execPath));
 			setConstant("PAHUB_PACKAGE_FILE", path.join(constant.PAHUB_BASE_DIR, "resources/app/package.json"));
 			break;
 		case 'linux': // Linux
@@ -33,7 +33,6 @@ function initPlatform() {
 			//setConstant("PA_DATA_DIR", path.join('', '')); 
 			break;
 		case 'darwin': // Mac OSX
-			//TODO
 			setConstant("PA_DATA_DIR", path.join(process.env.HOME, 'Library/Application Support/Uber Entertainment/Planetary Annihilation')); 
 			// removing "MacOS/Atom Helper", leaving us at ..."Atom.app/Content"
 			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../..')));
@@ -105,15 +104,14 @@ function loadConfig() {
 	
 	if (configJSON != false) {
 		pahubConfig = configJSON;
-		checkForUpdates(function() {
-			loadCorePlugins();
-		});
+		checkForUpdates();
+		loadCorePlugins();
 	} else {
 		//error
 	}
 }
 
-function checkForUpdates(completed_func) {
+function checkForUpdates() {
 	pahub.api.resource.loadResource(constant.PAHUB_PACKAGE_URL, "save", {
 		saveas: "package.json", 
 		name: "PA Hub update information",
@@ -126,9 +124,6 @@ function checkForUpdates(completed_func) {
 		},
 		fail: function(data) {
 			//error
-		},
-		always: function(data) {
-			completed_func();
 		}
 	});
 }

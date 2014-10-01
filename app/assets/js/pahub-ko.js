@@ -309,7 +309,7 @@ $(document).ready(function () {
 		}
 		
 		self.loadPlugin = function(folder, success) {
-			pahub.api.log.addLogMessage("verb", "Loading plugin from folder '" + path.basename(path.normalize(folder)) + "'");
+			pahub.api.log.addLogMessage("verb", "Loading Plugin from folder '" + path.basename(path.normalize(folder)) + "'");
 			var info = readJSONfromFile(path.join(folder, "content-info.json"));
 			
 			if (info != false) {
