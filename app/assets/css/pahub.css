@@ -42,7 +42,7 @@ body {
   display: block;
   position: absolute;
   top: 124px;
-  bottom: 60px;
+  bottom: 42px;
   left: 0px;
   width: 262px;
   height: auto;
@@ -191,7 +191,7 @@ body {
   display: block;
   position: absolute;
   top: 124px;
-  bottom: 60px;
+  bottom: 42px;
   left: 290px;
   right: 0px;
   width: auto;
@@ -238,7 +238,7 @@ body {
   left: 0px;
   right: 0px;
   width: auto;
-  height: 60px;
+  height: 42px;
 }
 .wrapper {
   color: #888888;

@@ -120,11 +120,16 @@ $(document).ready(function () {
 								}
 								
 								if (self.resource_queue()[i].action == "save") {
+									var save_path = "";
 									if (self.resource_queue()[i].hasOwnProperty("saveas") == true) {
-										writeToFile(path.join(constant.PAHUB_CACHE_DIR, self.resource_queue()[i].saveas), new Buffer(new Uint8Array(self.resource_queue()[i].data)));
+										save_path = path.join(constant.PAHUB_CACHE_DIR, self.resource_queue()[i].saveas);
 									} else {
-										writeToFile(path.join(constant.PAHUB_CACHE_DIR, path.basename(self.resource_queue()[i].url)), new Buffer(new Uint8Array(self.resource_queue()[i].data)));
+										save_path = path.join(constant.PAHUB_CACHE_DIR, path.basename(self.resource_queue()[i].url));
 									}
+									if (fs.existsSync(path.dirname(save_path)) == false) {
+										mkdirp.sync(path.dirname(save_path));
+									}
+									writeToFile(save_path, new Buffer(new Uint8Array(self.resource_queue()[i].data)));
 								}
 								
 								self.resource_queue()[i].processed(true);
@@ -223,7 +228,6 @@ $(document).ready(function () {
 					resource.percent(1);
 					resource.status = "complete";
 					resource.data = data;
-					model.downloading_item("");
 					pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Loading resource completed");
 				})
 				.fail(function(data, textStatus, errorThrown) {
@@ -233,8 +237,22 @@ $(document).ready(function () {
 				})
 				.always(function(data, textStatus, jqXHR) {	
 					self.processResourceQueue();
+					if (self.nextDownloadingResource() != null) {
+						self.downloading_item(self.nextDownloadingResource().name);
+					} else {
+						self.downloading_item("");
+					}
 				});
 			})(resource, datatype);
+		}
+		
+		self.nextDownloadingResource = function() {
+			for (var i = 0; i < self.resource_queue().length; i++) {
+				if (self.resource_queue()[i].status == "") {
+					return self.resource_queue()[i];
+				}
+			}
+			return null;
 		}
 		
 		/** LOGGING **/
@@ -386,13 +404,7 @@ $(document).ready(function () {
 				
 		self.active_tab = ko.observable(); //make this computed, based on active_tab_id
 		self.active_tab_id = ko.observable("");
-		self.current_tabs = ko.computed(function() { 
-			if (self.active_section()) {
-				return self.active_section().tabs();
-			} else {
-				return [];
-			}
-		});
+		self.current_tabs = ko.observableArray();
 		
 		
 		self.addSection = function (section_id, display_name, img_src, location, index) {
@@ -443,6 +455,7 @@ $(document).ready(function () {
 				if (self.sectionExists(section_id) == true) {
 					self.active_section_id(section_id);
 					self.active_section(self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)]);
+					self.current_tabs(self.active_section().tabs());
 					if (self.current_tabs().length > 0) {
 						self.setActiveTab(self.current_tabs()[0].tab_id);
 					} else {

@@ -1,6 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var mkdirp = require('mkdirp');
+var JSZip = require('jszip');
 
 var constant = {};
 
@@ -97,6 +98,101 @@ function loadPackage() {
 	}
 }
 
+/**
+ * Look ma, it's cp -R.
+ * @param {string} src The path to the thing to copy.
+ * @param {string} dest The path to the new copy.
+ */
+ // http://stackoverflow.com/questions/13786160/copy-folder-recursively-in-node-js
+var copyRecursiveSync = function(src, dest) {
+	var exists = fs.existsSync(src);
+	var stats = exists && fs.statSync(src);
+	var isDirectory = exists && stats.isDirectory();
+	if (exists && isDirectory) {
+		fs.mkdirSync(dest);
+		fs.readdirSync(src).forEach(function(childItemName) {
+			copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
+		});
+	} else {
+		fs.linkSync(src, dest);
+	}
+};
+
+//http://stackoverflow.com/questions/12627586/is-node-js-rmdir-recursive-will-it-work-on-non-empty-directories
+deleteFolderRecursive = function(path) {
+    var files = [];
+    if( fs.existsSync(path) ) {
+        files = fs.readdirSync(path);
+        files.forEach(function(file,index){
+            var curPath = path + "/" + file;
+            if(fs.lstatSync(curPath).isDirectory()) { // recurse
+                deleteFolderRecursive(curPath);
+            } else { // delete file
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(path);
+    }
+};
+
+function getZippedFilePath(zip_source, file_name) {
+	//check it's a zip file?
+	if (fs.existsSync(path.normalize(zip_source)) == true) {
+		var zipFile = readFromFile(zip_source);
+		var zipObject = new JSZip(zipFile.toArrayBuffer());
+        for(var fileName in zipObject.files) {
+			if (path.basename(fileName) == file_name) {
+				return path.dirname(fileName);
+			}
+		}
+	}
+	alert(fs.existsSync(path.normalize(zip_source)));
+	return false;
+}
+
+function extractZip(source, folder, destination, subfolder) {
+	//check it's a zip file?
+	if (fs.existsSync(path.normalize(source)) == true) {
+		
+		var zipFile = readFromFile(source);
+		var zipObject = new JSZip(zipFile.toArrayBuffer());
+
+		if (fs.existsSync(path.join(constant.PAHUB_CACHE_DIR, folder)) == true) {
+			deleteFolderRecursive(path.join(constant.PAHUB_CACHE_DIR, folder));
+		}
+		mkdirp.sync(path.join(constant.PAHUB_CACHE_DIR, folder));
+
+		
+        for(var fileName in zipObject.files) {
+			var currentFile = zipObject.files[fileName];
+			if (currentFile.options.dir == true) {
+				if (subfolder == null || currentFile.name.indexOf(subfolder) == 0) {
+					var folderPath = path.join(constant.PAHUB_CACHE_DIR, folder, subfolder ? currentFile.name.replace(subfolder, "") : currentFile.name);
+												
+					if (fs.existsSync(folderPath) == false) {
+						mkdirp.sync(folderPath);
+					}
+				}
+			} else {
+				if (subfolder == null || currentFile.name.indexOf(subfolder) == 0) {
+					var filePath = path.join(constant.PAHUB_CACHE_DIR, folder, subfolder ? currentFile.name.replace(subfolder, "") : currentFile.name);
+					writeToFile(filePath, new Buffer(currentFile.asUint8Array()));
+				}
+			}
+		}
+		
+		//do this via a "deleteContent" command, which uses the current content.url to determine where to delete
+		//this overcomes the issue of old installed mods using theit own folder names instead of content ids.
+		if (fs.existsSync(path.join(destination, folder)) == true) {
+			//backup existing directory first
+			deleteFolderRecursive(path.join(destination, folder));
+		}
+		copyRecursiveSync(path.join(constant.PAHUB_CACHE_DIR, folder), path.join(destination, folder));
+		
+		//cleanup
+	}
+}
+
 //parses pahub-config.json, and loads core plugins
 function loadConfig() {
 	pahub.api.log.addLogMessage("verb", "Loading PAHUB config file");
@@ -115,6 +211,7 @@ function checkForUpdates() {
 	pahub.api.resource.loadResource(constant.PAHUB_PACKAGE_URL, "save", {
 		saveas: "package.json", 
 		name: "PA Hub update information",
+		mode: "async",
 		success: function(data) {
 			var onlinePackageJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, "package.json"));
 			if (onlinePackageJSON != false) {
