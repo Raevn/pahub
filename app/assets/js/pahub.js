@@ -2,6 +2,7 @@ var fs = require('fs');
 var path = require('path');
 var mkdirp = require('mkdirp');
 var JSZip = require('jszip');
+var semver = require('semver');
 
 var constant = {};
 
@@ -92,7 +93,6 @@ function loadPackage() {
 	
 	if (packageJSON != false) {
 		pahubPackage = packageJSON;
-		pahub.api.log.addLogMessage("info", "PA Hub version: " + pahubPackage.version);
 	} else {
 		//shouldn't ever get here.
 	}
@@ -216,7 +216,8 @@ function checkForUpdates() {
 			var onlinePackageJSON = readJSONfromFile(path.join(constant.PAHUB_CACHE_DIR, "package.json"));
 			if (onlinePackageJSON != false) {
 				var onlinePackage = onlinePackageJSON;
-				pahub.api.log.addLogMessage("info", "Latest PA Hub version: " + onlinePackageJSON.version);
+				pahub.api.log.addLogMessage("info", "PA Hub current version: " + pahubPackage.version);
+				pahub.api.log.addLogMessage("info", "PA Hub latest version: " + onlinePackageJSON.version);
 			}
 		},
 		fail: function(data) {
