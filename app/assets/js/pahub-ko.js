@@ -191,11 +191,13 @@ $(document).ready(function () {
 			pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Loading network resource: '" + resource.name + "'");
 			var datatype = resource.action == "save" ? "arraybuffer" : "text";
 			
+			$.ajaxSetup({ cache: false });
+			
 			self.downloading(true);
 			if (model.downloading_item() == "") {
 				model.downloading_item(resource.name);
 			}
-			
+						
 			(function(resource, datatype) {
 				
 				var xhr = $.ajax({
