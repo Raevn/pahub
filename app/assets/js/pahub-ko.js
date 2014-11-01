@@ -100,6 +100,7 @@ $(document).ready(function () {
 					if (process_sync == true && self.resource_queue()[i].mode == "sync" || self.resource_queue()[i].mode == "async") {
 						if (self.resource_queue()[i].status != "") {
 							if (self.resource_queue()[i].status == "complete") {
+								pahub.api.log.addLogMessage("debug", "Processing completed resource: " + self.resource_queue()[i].name);
 								if (self.resource_queue()[i].action == "load") {
 									var tag = "";
 									if (path.extname(path.normalize(self.resource_queue()[i].url)) == ".js") {

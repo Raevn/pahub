@@ -28,7 +28,7 @@ body {
 	background-color: @medium-grey;
 	margin: 0px;
 	padding: 0px;
-    font-family: 'Sansation Bold';
+    font-family: 'Verdana';
 	font-size: 16px;
 	color: @very-light-grey;
 }
@@ -38,14 +38,23 @@ body {
 	color: @very-light-grey;
 	font-size: 24px;
 	margin-bottom: 10px;
+    clear: both;
 }
 .heading2 {
     font-family: 'Sansation Bold';
 	color: @very-light-grey;
 	font-size: 20px;
 	margin-bottom: 5px;
+    clear: both;
 }
 
+.divider {
+	width: 100%;
+	clear: both;
+	border-bottom: 1px solid @medium-light-grey;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}
 
 #container-header {	
 	background-image: url('../img/pahub-title.png');
@@ -60,6 +69,7 @@ body {
 	color: @blue;
 	font-weight: bold;
 	font-size: 24px;
+    font-family: 'Sansation Bold';
 }
 
 #container-sections {	
@@ -166,6 +176,7 @@ body {
 	float: left;
 	
 	font-weight: bold;
+    font-family: 'Sansation Bold';
 }
 
 .section-display-name:hover {
@@ -213,7 +224,7 @@ body {
 	
 	padding-left: 10px;
 	padding-right: 10px;
-	margin-bottom: -5px;
+	margin-bottom: -4px;
 	
 	cursor: pointer;
 	
@@ -235,6 +246,7 @@ body {
 
 .tab-display-name {
 	float: left;
+    font-family: 'Sansation Bold';
 }
 
 .tab-icon {
@@ -341,9 +353,11 @@ body {
 
 .text-button:before {
 	content: " [ ";
+	color: #888888;
 }
 .text-button:after {
 	content: " ] ";
+	color: #888888;
 }
 
 .loading-text {

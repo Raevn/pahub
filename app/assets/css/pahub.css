@@ -8,7 +8,7 @@ body {
   background-color: #1a1a1a;
   margin: 0px;
   padding: 0px;
-  font-family: 'Sansation Bold';
+  font-family: 'Verdana';
   font-size: 16px;
   color: #f9f9f9;
 }
@@ -17,12 +17,21 @@ body {
   color: #f9f9f9;
   font-size: 24px;
   margin-bottom: 10px;
+  clear: both;
 }
 .heading2 {
   font-family: 'Sansation Bold';
   color: #f9f9f9;
   font-size: 20px;
   margin-bottom: 5px;
+  clear: both;
+}
+.divider {
+  width: 100%;
+  clear: both;
+  border-bottom: 1px solid #515151;
+  margin-top: 8px;
+  margin-bottom: 8px;
 }
 #container-header {
   background-image: url('../img/pahub-title.png');
@@ -36,6 +45,7 @@ body {
   color: #008cff;
   font-weight: bold;
   font-size: 24px;
+  font-family: 'Sansation Bold';
 }
 #container-sections {
   background-color: #0b0b0b;
@@ -126,6 +136,7 @@ body {
   padding-left: 12px;
   float: left;
   font-weight: bold;
+  font-family: 'Sansation Bold';
 }
 .section-icon {
   float: left;
@@ -161,7 +172,7 @@ body {
   height: 23px;
   padding-left: 10px;
   padding-right: 10px;
-  margin-bottom: -5px;
+  margin-bottom: -4px;
   cursor: pointer;
   border-radius: 0px;
   border-image: url("../img/tabs/img_tab_std_rest.png") 12 12 1 11 fill;
@@ -177,6 +188,7 @@ body {
 }
 .tab-display-name {
   float: left;
+  font-family: 'Sansation Bold';
 }
 .tab-icon {
   float: left;
@@ -268,9 +280,11 @@ body {
 }
 .text-button:before {
   content: " [ ";
+  color: #888888;
 }
 .text-button:after {
   content: " ] ";
+  color: #888888;
 }
 .loading-text {
   float: left;

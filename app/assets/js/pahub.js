@@ -3,6 +3,7 @@ var path = require('path');
 var mkdirp = require('mkdirp');
 var JSZip = require('jszip');
 var semver = require('semver');
+var shell = require('shell');
 
 var constant = {};
 
@@ -77,6 +78,7 @@ function initPlatform() {
 		pahub.api.log.addLogMessage("verb", "pahug-config.json file not found, generating");
 		writeJSONtoFile(constant.PAHUB_CONFIG_FILE, {			
 			"plugins_core": [
+				"com.pahub.content.plugin.settings",
 				"com.pahub.content.plugin.contenthub",
 				"com.pahub.content.plugin.store.plugin"
 			]
@@ -109,12 +111,20 @@ var copyRecursiveSync = function(src, dest) {
 	var stats = exists && fs.statSync(src);
 	var isDirectory = exists && stats.isDirectory();
 	if (exists && isDirectory) {
-		fs.mkdirSync(dest);
+		try {
+			fs.mkdirSync(dest);
+		} catch (err) {
+			pahub.api.log.addLogMessage("error", "Error creating folder: " + dest);
+		}
 		fs.readdirSync(src).forEach(function(childItemName) {
 			copyRecursiveSync(path.join(src, childItemName), path.join(dest, childItemName));
 		});
 	} else {
-		fs.linkSync(src, dest);
+		try {
+			fs.linkSync(src, dest);
+		} catch (err) {
+			pahub.api.log.addLogMessage("error", "Error creating file: " + dest);
+		}
 	}
 };
 
@@ -131,7 +141,11 @@ deleteFolderRecursive = function(path) {
                 fs.unlinkSync(curPath);
             }
         });
-        fs.rmdirSync(path);
+		try {
+			fs.rmdirSync(path);
+		} catch (err) {
+			pahub.api.log.addLogMessage("error", "Error removing folder: " + path);
+		}
     }
 };
 
@@ -146,7 +160,6 @@ function getZippedFilePath(zip_source, file_name) {
 			}
 		}
 	}
-	alert(fs.existsSync(path.normalize(zip_source)));
 	return false;
 }
 
@@ -161,22 +174,29 @@ function extractZip(source, folder, destination, subfolder) {
 			deleteFolderRecursive(path.join(constant.PAHUB_CACHE_DIR, folder));
 		}
 		mkdirp.sync(path.join(constant.PAHUB_CACHE_DIR, folder));
-
 		
         for(var fileName in zipObject.files) {
 			var currentFile = zipObject.files[fileName];
 			if (currentFile.options.dir == true) {
 				if (subfolder == null || currentFile.name.indexOf(subfolder) == 0) {
 					var folderPath = path.join(constant.PAHUB_CACHE_DIR, folder, subfolder ? currentFile.name.replace(subfolder, "") : currentFile.name);
-												
+
 					if (fs.existsSync(folderPath) == false) {
-						mkdirp.sync(folderPath);
+						try {
+							mkdirp.sync(folderPath);
+						} catch (err) {
+							pahub.api.log.addLogMessage("error", "Error creating folder: " + folderPath);
+						}
 					}
 				}
 			} else {
 				if (subfolder == null || currentFile.name.indexOf(subfolder) == 0) {
 					var filePath = path.join(constant.PAHUB_CACHE_DIR, folder, subfolder ? currentFile.name.replace(subfolder, "") : currentFile.name);
-					writeToFile(filePath, new Buffer(currentFile.asUint8Array()));
+					try {
+						writeToFile(filePath, new Buffer(currentFile.asUint8Array()));
+					} catch (err) {
+						pahub.api.log.addLogMessage("error", "Error writing file: " + filePath);
+					}
 				}
 			}
 		}
@@ -188,7 +208,7 @@ function extractZip(source, folder, destination, subfolder) {
 			deleteFolderRecursive(path.join(destination, folder));
 		}
 		copyRecursiveSync(path.join(constant.PAHUB_CACHE_DIR, folder), path.join(destination, folder));
-		
+
 		//cleanup
 	}
 }
@@ -218,6 +238,21 @@ function checkForUpdates() {
 				var onlinePackage = onlinePackageJSON;
 				pahub.api.log.addLogMessage("info", "PA Hub current version: " + pahubPackage.version);
 				pahub.api.log.addLogMessage("info", "PA Hub latest version: " + onlinePackageJSON.version);
+				if (semver.gt(onlinePackageJSON.version, pahubPackage.version) == true ) {
+					pahub.api.resource.loadResource(constant.PAHUB_UPDATE_URL, "save", {
+						saveas: "pahub.zip", 
+						name: "PA Hub update",
+						mode: "async",
+						success: function(data) {
+							if (process.platform == "win32") {
+								extractZip(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "app", path.join(constant.PAHUB_BASE_DIR, "resources"), getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "assets"));
+								alert("PA Hub will now restart to install update");
+								restart();
+							}
+						}
+					});
+				}
+				
 			}
 		},
 		fail: function(data) {
@@ -399,3 +434,18 @@ function getTimeString(time) {
 	return pad10(time.getHours()) + ":" + pad10(time.getMinutes()) + ":" + pad10(time.getSeconds()) + "." + pad100(time.getMilliseconds());
 }
 
+function close() {
+    var remote = require('remote');
+    var app = remote.require('app');
+    app.quit();
+}
+
+function restart() {
+    var child_process = require('child_process');
+    var path = require('path');
+    var argv = require('remote').process.argv;
+    
+    var child = child_process.spawn(argv[0], argv.splice(1), { detached: true, stdio: 'inherit' });
+    child.unref();
+    close();
+}
