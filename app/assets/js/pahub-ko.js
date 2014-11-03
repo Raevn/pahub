@@ -13,6 +13,11 @@ $(document).ready(function () {
 		 *********/
 		
 		self.sections_minimised = ko.observable(false);
+		self.stream = ko.observable();
+		self.streams = ko.observableArray();
+		self.steam = ko.observable(false);
+		self.pte_build = ko.observable();
+		self.stable_build = ko.observable();
 		
 		/***************
 		 *  RESOURCES  *
@@ -430,7 +435,7 @@ $(document).ready(function () {
 					return left.index == right.index ? 0 : (left.index < right.index ? -1 : 1);
 				});
 				
-				if (self.active_section_id() == "") {
+				if (self.active_section_id() == "" || self.active_section_id() == section_id) {
 					self.setActiveSection(section_id);
 				}
 			}
@@ -451,14 +456,14 @@ $(document).ready(function () {
 		self.setActiveSection = function (section_id) {
 			//TODO: Logging
 			//TODO: Validity Checking
-			if (self.active_section_id() != section_id) {
-				if (section_id == "") {
-					section_id = self.sections()[0].section_id;
-				}
-				if (self.sectionExists(section_id) == true) {
-					self.active_section_id(section_id);
-					self.active_section(self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)]);
-					self.current_tabs(self.active_section().tabs());
+			if (section_id == "") {
+				section_id = self.sections()[0].section_id;
+			}
+			if (self.sectionExists(section_id) == true) {
+				self.active_section_id(section_id);
+				self.active_section(self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)]);
+				self.current_tabs(self.active_section().tabs());
+				if (self.sectionTabExists(section_id, self.active_tab_id()) == false) {
 					if (self.current_tabs().length > 0) {
 						self.setActiveTab(self.current_tabs()[0].tab_id);
 					} else {

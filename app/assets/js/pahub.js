@@ -17,11 +17,11 @@ function init() {
 	setConstant("PAHUB_PACKAGE_URL", "https://raw.githubusercontent.com/raevn/pahub/master/app/package.json");
 	setConstant("PAHUB_UPDATE_URL", "https://github.com/raevn/pahub/archive/master.zip");
 	loadPackage();
+	getPAInstallPath();
 	loadConfig();
 }
 
 function initPlatform() {
-	var platform = "";
 	pahub.api.log.addLogMessage("info", "Detected architecture: " + process.arch);
 	pahub.api.log.addLogMessage("info", "Detected platform: " + process.platform);
 
@@ -29,11 +29,12 @@ function initPlatform() {
 		case 'win32': // Windows
 			setConstant("PA_DATA_DIR", path.join(process.env.USERPROFILE, "appdata/local/Uber Entertainment/Planetary Annihilation"));
 			setConstant("PAHUB_BASE_DIR", path.dirname(process.execPath));
-			setConstant("PAHUB_PACKAGE_FILE", path.join(constant.PAHUB_BASE_DIR, "resources/app/package.json"));
+			setConstant("PAHUB_PACKAGE_FILE", path.join(process.resourcesPath, "app/package.json"));
 			break;
 		case 'linux': // Linux
-			//TODO
-			//setConstant("PA_DATA_DIR", path.join('', '')); 
+			setConstant("PA_DATA_DIR", path.join(process.env.HOME, ".local/Uber Entertainment/Planetary Annihilation"));
+			setConstant("PAHUB_BASE_DIR", path.dirname(process.execPath));
+			setConstant("PAHUB_PACKAGE_FILE", path.join(process.resourcesPath, "app/package.json"));
 			break;
 		case 'darwin': // Mac OSX
 			setConstant("PA_DATA_DIR", path.join(process.env.HOME, 'Library/Application Support/Uber Entertainment/Planetary Annihilation')); 
@@ -135,9 +136,9 @@ deleteFolderRecursive = function(path) {
         files = fs.readdirSync(path);
         files.forEach(function(file,index){
             var curPath = path + "/" + file;
-            if(fs.lstatSync(curPath).isDirectory()) { // recurse
+            if(fs.lstatSync(curPath).isDirectory()) {
                 deleteFolderRecursive(curPath);
-            } else { // delete file
+            } else {
                 fs.unlinkSync(curPath);
             }
         });
@@ -244,11 +245,9 @@ function checkForUpdates() {
 						name: "PA Hub update",
 						mode: "async",
 						success: function(data) {
-							if (process.platform == "win32") {
-								extractZip(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "app", path.join(constant.PAHUB_BASE_DIR, "resources"), getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "assets"));
-								alert("PA Hub will now restart to install update");
-								restart();
-							}
+							extractZip(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "app", path.join(constant.PAHUB_BASE_DIR, "resources"), getZippedFilePath(path.join(constant.PAHUB_CACHE_DIR, "pahub.zip"), "assets"));
+							alert("PA Hub will now restart to install update");
+							restart();
 						}
 					});
 				}
@@ -432,6 +431,133 @@ function getTimeString(time) {
 	}
 	
 	return pad10(time.getHours()) + ":" + pad10(time.getMinutes()) + ":" + pad10(time.getSeconds()) + "." + pad100(time.getMilliseconds());
+}
+
+//converts a date/time object in YYYY-MM-DD HH:MM:SS
+function getDateTimeString(date) {
+	function pad10(n) {
+		return n < 10 ? '0' + n : n;
+	}	
+	return date.getFullYear() + "-" + pad10(date.getMonth()) + "-" + pad10(date.getDate()) + " " + pad10(date.getHours()) + ":" + pad10(date.getMinutes()) + ":" + pad10(date.getSeconds());
+}
+
+function getPAInstallPath() {
+	var found = false;
+	var logDir = path.join(constant.PA_DATA_DIR, "log");
+	
+	if (fs.existsSync(logDir) == true) {
+		var files = fs.readdirSync(logDir);
+		var logFile = "";
+	   
+		for(var i in files){
+			if (!files.hasOwnProperty(i)) continue;
+			
+			var name = path.join(constant.PA_DATA_DIR, "log", files[i]);
+			//sort by date
+			if (fs.statSync(name).isDirectory() == false && name != "Coherent_UI.log"){
+				logFile = name;
+			}
+		}
+		if (logFile != "") {
+			var logFileContent = readFromFile(logFile);
+			
+			var filteredLog = logFileContent.toString().split("\n").filter(function (line) {
+				return line.indexOf("Coherent host dir") > -1;
+			});
+			
+			
+			if (filteredLog.length > 0) {
+				var hostDir = path.normalize(filteredLog[0].split("\"")[1]);
+				found = true;
+				pahub.api.log.addLogMessage("info", "Planetary Annihilation Installation directory found");
+				
+				var steamPathCheck = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\");
+				
+				if (steamPathCheck.indexOf(path.join("SteamApps", "common")) > -1) {
+					model.steam(true);
+				}
+				
+				if (model.steam() == true) {
+					pahub.api.log.addLogMessage("info", "Detected Steam version of Planetary Annihilation");
+					setConstant("PA_STABLE_DIR", path.normalize(hostDir + "\\\\..\\\\..\\\\"));
+				} else {
+					if (process.platform == "win32") {
+						if (hostDir.indexOf("bin_x86") > -1) {
+							setConstant("PA_ARCHITECTURE", "x86");
+						} else {
+							setConstant("PA_ARCHITECTURE", "x64");
+						}
+						
+						var installDir = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\");
+						setConstant("PA_STABLE_DIR", path.join(installDir, "stable"));
+						setConstant("PA_PTE_DIR", path.join(installDir, "PTE"));
+					}
+					if (process.platform == "linux") {
+						setConstant("PA_STABLE_DIR", path.join(hostDir, "\\\\..\\\\"));
+					}
+					if (process.platform == "darwin") {
+						var installDir = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\..\\\\..\\\\");
+						setConstant("PA_STABLE_DIR", path.join(hostDir, "stable", "PA.app", "Contents", "MacOS"));
+						setConstant("PA_PTE_DIR", path.join(hostDir, "PTE", "PA.app", "Contents", "MacOS"));
+					}
+				}
+				getInstalledStableBuild();
+				getInstalledPTEBuild();
+			}
+		}
+	}
+	if (found == false) {
+		pahub.api.log.addLogMessage("info", "Planetary Annihilation Installation directory NOT found");
+		alert("Could not find PA installation directory. Please run Planetary Annihilation, then restart PA Hub.");
+	}
+}
+
+function getInstalledPTEBuild() {
+	if (fs.existsSync(path.join(constant.PA_PTE_DIR, "version.txt")) == true) {
+		var build = readFromFile(path.join(constant.PA_PTE_DIR, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
+		pahub.api.log.addLogMessage("info", "Planetary Annihilation PTE Build: " + build);
+		setConstant("PA_PTE_BUILD", build);
+		model.pte_build = ko.observable(constant.PA_PTE_BUILD);
+		if (model.streams().indexOf("PTE") == -1) {
+			model.streams.push("PTE");
+		}
+	}
+}
+
+function getInstalledStableBuild() {
+	if (fs.existsSync(path.join(constant.PA_STABLE_DIR, "version.txt")) == true) {
+		var build = readFromFile(path.join(constant.PA_STABLE_DIR, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
+		if (model.steam() == true) {
+			pahub.api.log.addLogMessage("info", "Planetary Annihilation Steam Build: " + build);
+			if (model.streams().indexOf("STEAM") == -1) {
+				model.streams.push("STEAM");
+			}		
+		} else {
+			pahub.api.log.addLogMessage("info", "Planetary Annihilation Stable Build: " + build);
+			if (model.streams().indexOf("STABLE") == -1) {
+				model.streams.push("STABLE");
+			}
+		}
+		setConstant("PA_STABLE_BUILD", build);
+		model.stable_build = ko.observable(constant.PA_STABLE_BUILD);
+	}
+}
+
+function launchPA(stream) {
+	if (stream == "STEAM") {
+		shell.openExternal('steam://rungameid/233250')
+	}
+	if (process.platform == "win32") {
+		if (stream == "STABLE") {
+			shell.openExternal(path.join(constant.PA_STABLE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
+		} 
+		if (stream == "PTE") {
+			shell.openExternal(path.join(constant.PA_PTE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
+		}
+	}
+	if (process.platform == "linux" || process.platform == "darwin") {
+		shell.openExternal(path.join(constant.PA_STABLE_DIR, "PA"));
+	}
 }
 
 function close() {

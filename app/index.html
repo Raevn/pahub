@@ -41,6 +41,16 @@
 					<!-- /ko -->
 				</div>
 			</div>
+			<!-- ko if: model.stream() && model.streams().length > 0 -->
+				<div data-bind="click: function() { launchPA(model.stream())}" class="section" style="width: 200px;">
+					<div class="section-icon"><img src="assets/img/launch.png"/></div>
+					<div class="section-display-name" data-bind="text: 'Launch PA' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Launch PA</div>
+				</div>
+			<!-- /ko -->
+			<div data-bind="style: {marginTop: ((model.stream() && model.streams().length > 0) ? '0px' : '48px')}" class="section" style="width: 200px;">
+				<div class="section-icon"><img src="assets/img/exit.png"></div>
+				<div class="section-display-name" data-bind="click: function() { close(); }">Exit</div>
+			</div>
 		</div>
 		<div id="container-sections-header" class="container">
 			<div id="container-sections-header-cont">
