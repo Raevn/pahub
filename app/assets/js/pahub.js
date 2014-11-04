@@ -471,7 +471,7 @@ function getPAInstallPath() {
 				found = true;
 				pahub.api.log.addLogMessage("info", "Planetary Annihilation Installation directory found");
 				
-				var steamPathCheck = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\");
+				var steamPathCheck = path.join(hostDir, "../../..");
 				
 				if (steamPathCheck.indexOf(path.join("SteamApps", "common")) > -1) {
 					model.steam(true);
@@ -479,8 +479,9 @@ function getPAInstallPath() {
 				
 				if (model.steam() == true) {
 					pahub.api.log.addLogMessage("info", "Detected Steam version of Planetary Annihilation");
-					setConstant("PA_STABLE_DIR", path.normalize(hostDir + "\\\\..\\\\..\\\\"));
+					setConstant("PA_STABLE_DIR", path.join(hostDir, "../../"));
 				} else {
+					pahub.api.log.addLogMessage("info", "Detected Non-Steam version of Planetary Annihilation");
 					if (process.platform == "win32") {
 						if (hostDir.indexOf("bin_x86") > -1) {
 							setConstant("PA_ARCHITECTURE", "x86");
@@ -488,21 +489,23 @@ function getPAInstallPath() {
 							setConstant("PA_ARCHITECTURE", "x64");
 						}
 						
-						var installDir = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\");
+						var installDir = path.join(hostDir, "../../..");
 						setConstant("PA_STABLE_DIR", path.join(installDir, "stable"));
 						setConstant("PA_PTE_DIR", path.join(installDir, "PTE"));
 					}
 					if (process.platform == "linux") {
-						setConstant("PA_STABLE_DIR", path.join(hostDir, "\\\\..\\\\"));
+						setConstant("PA_STABLE_DIR", path.join(hostDir, ".."));
 					}
 					if (process.platform == "darwin") {
-						var installDir = path.normalize(hostDir + "\\\\..\\\\..\\\\..\\\\..\\\\..\\\\");
+						var installDir = path.join(hostDir, "../../../../..");
 						setConstant("PA_STABLE_DIR", path.join(hostDir, "stable", "PA.app", "Contents", "MacOS"));
 						setConstant("PA_PTE_DIR", path.join(hostDir, "PTE", "PA.app", "Contents", "MacOS"));
 					}
 				}
 				getInstalledStableBuild();
-				getInstalledPTEBuild();
+				if (constant.hasOwnProperty("PA_STABLE_DIR") == true) {
+					getInstalledPTEBuild();
+				}
 			}
 		}
 	}
@@ -544,6 +547,8 @@ function getInstalledStableBuild() {
 }
 
 function launchPA(stream) {
+    var child_process = require('child_process');
+	
 	if (stream == "STEAM") {
 		shell.openExternal('steam://rungameid/233250')
 	}
@@ -555,9 +560,22 @@ function launchPA(stream) {
 			shell.openExternal(path.join(constant.PA_PTE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
 		}
 	}
-	if (process.platform == "linux" || process.platform == "darwin") {
-		shell.openExternal(path.join(constant.PA_STABLE_DIR, "PA"));
+	if (process.platform == "linux") {
+		child_process.exec(path.join(constant.PA_STABLE_DIR, "PA"));
 	}
+	if (process.platform == "darwin") {
+		if (stream == "STABLE") {
+			child_process.exec(path.join(constant.PA_STABLE_DIR, "PA"));
+		} 
+		if (stream == "PTE") {
+			child_process.exec(path.join(constant.PA_PTE_DIR, "PA"));
+		}
+	}
+}
+
+function launchURL(url) {
+	//TODO: sanitisation
+	shell.openExternal(url);
 }
 
 function close() {
