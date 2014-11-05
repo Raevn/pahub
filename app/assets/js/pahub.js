@@ -503,7 +503,7 @@ function getPAInstallPath() {
 					}
 				}
 				getInstalledStableBuild();
-				if (constant.hasOwnProperty("PA_STABLE_DIR") == true) {
+				if (constant.hasOwnProperty("PA_PTE_DIR") == true) {
 					getInstalledPTEBuild();
 				}
 			}
