@@ -9,6 +9,7 @@ var constant = {};
 
 var pahubConfig = {};
 var pahubPackage = {};
+var streams = {};
 
 function init() {
 	initPlatform();
@@ -24,7 +25,9 @@ function init() {
 function initPlatform() {
 	pahub.api.log.addLogMessage("info", "Detected architecture: " + process.arch);
 	pahub.api.log.addLogMessage("info", "Detected platform: " + process.platform);
+	
 
+	//TODO: Replace App with appropriate folder (there's a parameter that can be passed to Atom Shell to change this)
 	switch (process.platform) {
 		case 'win32': // Windows
 			setConstant("PA_DATA_DIR", path.join(process.env.USERPROFILE, "appdata/local/Uber Entertainment/Planetary Annihilation"));
@@ -441,6 +444,23 @@ function getDateTimeString(date) {
 	return date.getFullYear() + "-" + pad10(date.getMonth()) + "-" + pad10(date.getDate()) + " " + pad10(date.getHours()) + ":" + pad10(date.getMinutes()) + ":" + pad10(date.getSeconds());
 }
 
+function addStream(stream_name, build, dir, bin, stockmods) {
+	streams[stream_name] = {
+		build: build,
+		dir: dir,
+		bin: bin,
+		stockmods: stockmods
+	}
+	pahub.api.log.addLogMessage("info", "Stream " + stream_name + " added (build " + streams[stream_name].build + ")");
+	pahub.api.log.addLogMessage("verb", "Stream " + stream_name + " dir: " + streams[stream_name].dir);
+	pahub.api.log.addLogMessage("verb", "Stream " + stream_name + " bin: " + streams[stream_name].bin);
+	pahub.api.log.addLogMessage("verb", "Stream " + stream_name + " stockmods: " + streams[stream_name].stockmods);
+
+	if (model.streams().indexOf(stream_name) == -1) {
+		model.streams.push(stream_name);
+	}
+}
+
 function getPAInstallPath() {
 	var found = false;
 	var logDir = path.join(constant.PA_DATA_DIR, "log");
@@ -479,6 +499,51 @@ function getPAInstallPath() {
 				
 				if (model.steam() == true) {
 					pahub.api.log.addLogMessage("info", "Detected Steam version of Planetary Annihilation");
+					
+					if (process.platform == "win32") {
+						//TODO: alot of this is duplicate
+						if (hostDir.indexOf("bin_x86") > -1) {
+							setConstant("PA_ARCHITECTURE", "x86");
+						} else {
+							setConstant("PA_ARCHITECTURE", "x64");
+						}
+						var installDir = path.join(hostDir, "../../..");
+						var stable_dir = path.join(installDir, "stable");
+
+						addStream(
+							"STEAM",
+							getInstalledBuild(stable_dir, "STEAM"),
+							stable_dir,
+							path.join(stable_dir, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"),
+							path.join(stable_dir, "media", "stockmods")
+						);
+					}
+					if (process.platform == "linux") {
+						var linux_dir = path.join(hostDir, "../");
+
+						addStream(
+							"STEAM",
+							getInstalledBuild(linux_dir, "STEAM"),
+							linux_dir,
+							path.join(linux_dir, "PA"),
+							path.join(linux_dir, "media", "stockmods")
+						);
+					}
+					if (process.platform == "darwin") {
+						var installDir = path.join(hostDir, "../../../../..");
+						var stable_dir = path.join(installDir, "stable", "PA.app", "Contents", "MacOS");
+
+						addStream(
+							"STEAM",
+							getInstalledBuild(stable_dir, "STEAM"),
+							stable_dir,
+							path.join(stable_dir, "PA"),
+							path.join(stable_dir, "../Resources", "media", "stockmods")
+						);
+					}
+					model.stream("STEAM");
+					
+					//TODO: Deprecated
 					setConstant("PA_STABLE_DIR", path.join(hostDir, "../../"));
 				} else {
 					pahub.api.log.addLogMessage("info", "Detected Non-Steam version of Planetary Annihilation");
@@ -490,22 +555,83 @@ function getPAInstallPath() {
 						}
 						
 						var installDir = path.join(hostDir, "../../..");
+						var stable_dir = path.join(installDir, "stable");
+						var pte_dir = path.join(installDir, "PTE");
+						
+						if (fs.existsSync(path.join(stable_dir, "version.txt")) == true) {
+							addStream(
+								"STABLE",
+								getInstalledBuild(stable_dir, "STABLE"),
+								stable_dir,
+								path.join(stable_dir, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"),
+								path.join(stable_dir, "media", "stockmods")
+							);
+						}
+						if (fs.existsSync(path.join(pte_dir, "version.txt")) == true) {
+							addStream(
+								"PTE",
+								getInstalledBuild(pte_dir, "PTE"),
+								pte_dir,
+								path.join(pte_dir, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"),
+								path.join(pte_dir, "media", "stockmods")
+							);
+						}
+						
+						//TODO: Deprecated
 						setConstant("PA_STABLE_DIR", path.join(installDir, "stable"));
 						setConstant("PA_PTE_DIR", path.join(installDir, "PTE"));
 					}
 					if (process.platform == "linux") {
+						var linux_dir = path.join(hostDir, "../");
+						
+						if (fs.existsSync(path.join(linux_dir, "version.txt")) == true) {
+							addStream(
+								"LINUX",
+								getInstalledBuild(linux_dir, "LINUX"),
+								linux_dir,
+								path.join(linux_dir, "PA"),
+								path.join(linux_dir, "media", "stockmods")
+							);
+						}
+						
+						//TODO: Deprecated
 						setConstant("PA_STABLE_DIR", path.join(hostDir, ".."));
 					}
 					if (process.platform == "darwin") {
 						var installDir = path.join(hostDir, "../../../../..");
-						setConstant("PA_STABLE_DIR", path.join(hostDir, "stable", "PA.app", "Contents", "MacOS"));
-						setConstant("PA_PTE_DIR", path.join(hostDir, "PTE", "PA.app", "Contents", "MacOS"));
+						var stable_dir = path.join(installDir, "stable", "PA.app", "Contents", "MacOS");
+						var pte_dir = path.join(installDir, "PTE", "PA.app", "Contents", "MacOS");
+						
+						if (fs.existsSync(path.join(stable_dir, "version.txt")) == true) {
+							addStream(
+								"STABLE",
+								getInstalledBuild(stable_dir, "STABLE"),
+								stable_dir,
+								path.join(stable_dir, "PA"),
+								path.join(stable_dir, "../Resources", "media", "stockmods")
+							);
+						}
+						if (fs.existsSync(path.join(pte_dir, "version.txt")) == true) {
+							addStream(
+								"PTE",
+								getInstalledBuild(pte_dir, "PTE"),
+								pte_dir,
+								path.join(pte_dir, "PA"),
+								path.join(pte_dir, "../Resources", "media", "stockmods")
+							);
+						}
+						
+						//TODO: Deprecated
+						setConstant("PA_STABLE_DIR", path.join(installDir, "stable", "PA.app", "Contents", "MacOS"));
+						setConstant("PA_PTE_DIR", path.join(installDir, "PTE", "PA.app", "Contents", "MacOS"));
 					}
 				}
+				/*
 				getInstalledStableBuild();
 				if (constant.hasOwnProperty("PA_PTE_DIR") == true) {
 					getInstalledPTEBuild();
 				}
+				*/
 			}
 		}
 	}
@@ -515,6 +641,25 @@ function getPAInstallPath() {
 	}
 }
 
+function getInstalledBuild(install_path, stream_name) {
+	if (fs.existsSync(path.join(install_path, "version.txt")) == true) {
+		var build = readFromFile(path.join(install_path, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
+		pahub.api.log.addLogMessage("info", "Planetary Annihilation " + stream_name + " Build: " + build);
+		
+		//TODO: Deprecated, but included to avoid errors
+		if (model.streams().indexOf(stream_name) == -1) {
+			model.streams.push(stream_name);
+		}
+		setConstant("PA_PTE_BUILD", build);
+		setConstant("PA_STABLE_BUILD", build);
+		model.pte_build = ko.observable(constant.PA_PTE_BUILD);
+		model.stable_build = ko.observable(constant.PA_STABLE_BUILD);
+		
+		return build;
+	}
+	return 0;
+}
+/*
 function getInstalledPTEBuild() {
 	if (fs.existsSync(path.join(constant.PA_PTE_DIR, "version.txt")) == true) {
 		var build = readFromFile(path.join(constant.PA_PTE_DIR, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
@@ -545,13 +690,22 @@ function getInstalledStableBuild() {
 		model.stable_build = ko.observable(constant.PA_STABLE_BUILD);
 	}
 }
-
+*/
 function launchPA(stream) {
     var child_process = require('child_process');
-	
 	if (stream == "STEAM") {
 		shell.openExternal('steam://rungameid/233250')
+	} else {
+		if (streams[stream]) {
+			if (process.platform == "win32") {
+				shell.openExternal(streams[stream].bin);
+			} else {
+				child_process.exec(streams[stream].bin);
+			}
+		}
 	}
+	
+	/*
 	if (process.platform == "win32") {
 		if (stream == "STABLE") {
 			shell.openExternal(path.join(constant.PA_STABLE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
@@ -571,6 +725,7 @@ function launchPA(stream) {
 			child_process.exec(path.join(constant.PA_PTE_DIR, "PA"));
 		}
 	}
+	*/
 }
 
 function launchURL(url) {
