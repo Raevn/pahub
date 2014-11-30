@@ -55,7 +55,7 @@ function initPlatform() {
 		case 'darwin': // Mac OSX
 			setConstant("PA_DATA_DIR", path.join(process.env.HOME, 'Library/Application Support/Uber Entertainment/Planetary Annihilation')); 
 			// removing "MacOS/Atom Helper", leaving us at ..."Atom.app/Content"
-			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../..')));
+			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../../../../..')));
 			// ..."Atom.app/Content/Resources"
 			setConstant("PAHUB_PACKAGE_FILE", path.join(process.resourcesPath, "app/package.json"));
 			break;
