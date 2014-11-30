@@ -8,6 +8,98 @@ $(document).ready(function () {
 	function pahubViewModel() {
 		var self = this;
 		
+		/*******************
+		 *  Ubernet/Login  *
+		 *******************/
+		 		 
+		self.logged_in = ko.observable(false),
+		self.logging_in = ko.observable(false),
+		self.login_message = ko.observable(),
+		self.user = {
+			"username": ko.observable(),
+			"displayName": ko.observable(),
+			"sessionTicket": ko.observable(),
+			"profilePicture": ko.observable("assets/img/loading.gif")
+		},
+		
+		self.logout = function() {
+			if (self.logged_in() == true) {
+				self.logged_in(false);
+				var username = self.user.username();
+				self.user.username(null);
+				self.user.displayName(null);
+				self.user.sessionTicket(null);
+			
+				var user_section = pahub.api.section.getSection("section-user");
+				user_section.display_name("LOGIN");
+				self.login_message("Logged out");
+				pahub.api.log.addLogMessage("info", "User '" + username + "' logged out");
+			} else {
+				pahub.api.log.addLogMessage("verb", "Unable to log out: No user logged in");
+			}	
+		},
+		
+		self.login = function(username, password) {
+			pahub.api.log.addLogMessage("verb", "Login attempted for user '" + username + "'");
+			if (username == null || username == undefined || username == "") {
+				self.login_message("Invalid Username");
+				return;
+			}
+			if (password == null || password == undefined || password == "") {
+				self.login_message("Invalid Password");
+				return;
+			}
+			if (self.logged_in() == true) {
+				pahub.api.log.addLogMessage("verb", "A user is already logged in, logging them out first");
+				pahub.api.playfab.logout();
+			}
+			self.logging_in(true);
+			$.ajax({
+				cache: false,       
+				type: "POST",
+				crossDomain: true,
+				url: 'https://uberent.com/GC/Authenticate',
+				data: JSON.stringify({
+					"TitleId": 4, 
+					"AuthMethod": "UberCredentials", 
+					"UberName": username, 
+					"Password": password
+				}),
+				contentType: "application/json"
+			})
+			.done(function(data, textStatus, jqXHR) {
+				self.logged_in(true);
+				self.user.username(data.UberName);
+				self.user.displayName(data.DisplayName);
+				self.user.sessionTicket(data.SessionTicket);
+				var user_section = pahub.api.section.getSection("section-user");
+				user_section.display_name(self.user.displayName());
+				self.getProfilePicture();
+				self.login_message("Login successful");
+				pahub.api.log.addLogMessage("info", "Login successful for user '" + self.user.username() + "'");
+			})
+			.fail(function(data, textStatus, errorThrown) {
+				self.login_message("Login unsuccessful: " + errorThrown);
+				pahub.api.log.addLogMessage("error", "Login failed for user '" + self.user.username() + "' (" + errorThrown + ")");
+			})
+			.always(function(data, textStatus, jqXHR) {
+				self.logging_in(false);
+			})
+		},
+		
+		self.getProfilePicture = function(username) {
+			if (self.logged_in() == true) {
+				var query = "https://forums.uberent.com/members/?username=" + self.user.username();
+				pahub.api.resource.loadResource(query, "get", {name: "user profile page", mode: "async", success: function(resource) {
+					var picHTML = $(resource.data).find(".avatarScaler").find("img");
+					var url = picHTML.attr("src");
+					if (url) {
+						self.user.profilePicture(url);
+					}
+				}});
+			}
+		}
+		
 		/*********
 		 *  GUI  *
 		 *********/
@@ -95,7 +187,6 @@ $(document).ready(function () {
 		}
 		
 		self.processResourceQueue = function() {
-			pahub.api.log.addLogMessage("debug", "Processing Resource Queue");
 			var processed = 0;
 			var process_sync = true;
 			
@@ -105,7 +196,6 @@ $(document).ready(function () {
 					if (process_sync == true && self.resource_queue()[i].mode == "sync" || self.resource_queue()[i].mode == "async") {
 						if (self.resource_queue()[i].status != "") {
 							if (self.resource_queue()[i].status == "complete") {
-								pahub.api.log.addLogMessage("debug", "Processing completed resource: " + self.resource_queue()[i].name);
 								if (self.resource_queue()[i].action == "load") {
 									var tag = "";
 									if (path.extname(path.normalize(self.resource_queue()[i].url)) == ".js") {
@@ -208,9 +298,6 @@ $(document).ready(function () {
 				
 				var xhr = $.ajax({
 					progressFunc: function(event) {
-						if (resource.completed() == 0) {
-							pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Commencing download");
-						}
 						if (event.lengthComputable) {
 							if (resource.size() == 0 && resource.size() != event.total) {
 								pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Resource size: " + getFileSizeString(event.total));
@@ -414,6 +501,9 @@ $(document).ready(function () {
 		self.active_tab_id = ko.observable("");
 		self.current_tabs = ko.observableArray();
 		
+		self.getSection = function(section_id) {
+			return self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)];
+		}
 		
 		self.addSection = function (section_id, display_name, img_src, location, index) {
 			//TODO: Logging
@@ -423,7 +513,7 @@ $(document).ready(function () {
 			if (self.sectionExists(section_id) == false) {
 				self.sections.push({
 					section_id: section_id,
-					display_name: display_name,
+					display_name: ko.observable(display_name),
 					loc_key: createLocKey(display_name),
 					img_src: img_src || null,
 					index: index,
@@ -494,7 +584,7 @@ $(document).ready(function () {
 				if (self.tabExists(tab_id) == false) {
 					section.tabs.push({
 						tab_id: tab_id,
-						display_name: display_name || null,
+						display_name: ko.observable(display_name || null),
 						loc_key: createLocKey(display_name) || null,
 						img_src: img_src || null,
 						index: index

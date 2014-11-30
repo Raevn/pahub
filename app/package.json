@@ -1,6 +1,6 @@
 {
   "name"    : "pahub",
-  "version" : "0.2.3",
+  "version" : "0.3.0",
   "main"    : "main.js",
   "bundledDependencies" : [
     "jszip",

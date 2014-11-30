@@ -1,0 +1,29 @@
+<div class='heading1'>ACCOUNT</div>
+<!-- ko ifnot: logged_in() -->
+	<!-- ko if: model.logging_in -->
+		<div class='loading'><img style='float:left;' src='assets/img/loading.gif'><div class='loading-text'>Logging in ... </div></div><div style='clear:both; margin-bottom: 20px;'></div>
+	<!-- /ko -->
+	<!-- ko ifnot: model.logging_in -->
+		<!-- ko if: model.login_message -->
+			<div class="login-message" data-bind="text: model.login_message()"></div>
+		<!-- /ko -->
+		<p>Log in with your PlayFab (Ubernet) ID</p>
+		<div id='account-login-container'>
+			<div class='input-label'>Username: </div><input id='account-login-username' type='text' onKeyDown='if(event.keyCode == 13){pahub.api.playfab.login($("#account-login-username").val(),$("#account-login-password").val());}'/><br/>
+			<div class='input-label'>Password: </div><input id='account-login-password' type='password' onKeyDown='if(event.keyCode == 13){pahub.api.playfab.login($("#account-login-username").val(),$("#account-login-password").val());}'/><br/>
+			<div class='input-label'></div><div class='text-button' data-bind='click: function() {pahub.api.playfab.login($("#account-login-username").val(),$("#account-login-password").val())}'>Login</div><br/>
+		</div>
+	<!-- /ko -->	
+<!-- /ko -->
+<!-- ko if: logged_in() -->
+	<!-- ko if: model.login_message -->
+		<div class="login-message" data-bind="text: model.login_message()"></div><br/>
+	<!-- /ko -->
+	<div class="account-profile-container">
+		<div class="account-profile-details">
+			<div class='heading2' data-bind="text: model.user.displayName()"></div>
+			<div class='text-button' data-bind='click: function() { launchURL("https://forums.uberent.com/members/?username=" + model.user.username()); }'>Forum Profile</div><div class='text-button' data-bind='click: function() {pahub.api.playfab.logout()}'>Logout</div><br/>
+		</div>
+		<div class="account-profile-picture"><img data-bind="attr: {src: model.user.profilePicture()}"></div>
+	</div>
+<!-- /ko -->

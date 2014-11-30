@@ -132,7 +132,7 @@ body {
     display: inline-block;
 	position: relative;
 	height: 32px;
-	width: 32px;
+	min-width: 32px;
     margin-left: -10px;
 	padding: 0px;
 	
@@ -264,12 +264,31 @@ body {
 }
 
 .tab-icon {
+	margin-left: -16px;
+	margin-top: -6px;
+	margin-right: 4px;
 	float: left;
 }
 
 .tab-icon img {
-	width: 16px;
-	height: 16px;
+	width: 24px;
+	height: 24px;
+}
+
+.sub-tab-container {
+	display: block;
+	position: relative;
+	left: 0px;
+	right: 0px;
+	margin-right: 10px;
+	border-bottom: 1px solid #515151;
+}
+
+.far-right-tab-list {
+	display: block;
+	position: absolute;
+	right: 5px;
+	bottom: 5px;
 }
 
 #container-content {
@@ -410,4 +429,36 @@ input[type="checkbox"] + label{
 
 input[type="checkbox"]:checked + label{
     background: url('../img/checkbox_checked.png') no-repeat;
+}
+
+.link {
+	color: #008CFF;
+}
+
+.link:hover {
+	color: #00DEFF;
+	cursor: pointer;
+}
+
+.login-message {
+	color: #CC8800;
+	border: 1px solid #CC8800;
+	padding: 4px;
+}
+
+.account-profile-container {
+	position: relative;
+	border: 1px solid #515151;
+	background-color: #1A1A1A;
+	padding: 4px;
+}
+
+.account-profile-picture {
+	width: 184px;
+	height: 184px;
+}
+
+.account-profile-details {
+	position: absolute;
+	margin-left: 188px;
 }

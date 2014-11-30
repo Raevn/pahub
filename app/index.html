@@ -47,7 +47,7 @@
 						<div data-bind="click: function() { launchPA(model.stream())}" class="section section-first">
 							<div class="section-icon"><img src="assets/img/launch.png"/></div>
 							<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
-								<div class="section-display-name" data-bind="text: 'Launch PA' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Launch PA</div>
+								<div class="section-display-name" data-bind="text: 'Play' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Play</div>
 							<!-- /ko -->
 						</div>
 					<!-- /ko -->
@@ -68,6 +68,9 @@
 							<div data-bind="attr: {id: 'section-' + section_id}, css: {'selected-section': section_id == model.active_section_id()}, click: function(){model.setActiveSection(section_id)}" class="section-header">
 								<!-- ko if: img_src -->
 									<div class="section-icon"><img data-bind="attr: {src: img_src}"></div>
+								<!-- /ko -->
+								<!-- ko if: display_name -->
+									<div class="section-display-name" data-bind="text: display_name"></div>
 								<!-- /ko -->
 							</div>
 						<!-- /ko -->

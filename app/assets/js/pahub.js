@@ -20,6 +20,19 @@ function init() {
 	loadPackage();
 	getPAInstallPath();
 	loadConfig();
+	
+	
+	pahub.api.section.addSection("section-user", "LOGIN", "assets/img/user.png", "header", 0);
+	pahub.api.section.addSection("section-about", "", "assets/img/about.png", "header", 5);
+	pahub.api.tab.addTab("section-user", "account", "", "", 0);
+	pahub.api.tab.addTab("section-about", "about", "", "", 0);
+	
+	pahub.api.resource.loadResource(path.join(constant.PAHUB_BASE_DIR, "resources/app/assets/html/account.html"), "get", {name: "HTML: account", mode: "async", success: function(resource) {
+		pahub.api.tab.setTabContent("section-user", "account", resource.data);
+	}});
+	pahub.api.resource.loadResource(path.join(constant.PAHUB_BASE_DIR, "resources/app/assets/html/about.html"), "get", {name: "HTML: about", mode: "async", success: function(resource) {
+		pahub.api.tab.setTabContent("section-about", "about", resource.data);
+	}});
 }
 
 function initPlatform() {
@@ -335,7 +348,6 @@ function writeJSONtoFile(file, data) {
 }
 
 function writeToFile(file, data) {
-	pahub.api.log.addLogMessage("debug", "Writing to file: " + getShortPathString(file));
 	try {
 		fs.writeFileSync(file, data);
 		return true;
@@ -389,7 +401,6 @@ function readJSONfromFile(file) {
 
 function readFromFile(file) {
 	if (fs.existsSync(path.normalize(file)) == true) {
-		pahub.api.log.addLogMessage("debug", "Loading file: " + getShortPathString(file));
 		try {
 			var readFile = fs.readFileSync(path.normalize(file));
 			return readFile;
@@ -425,7 +436,7 @@ function getFileSizeString(size) {
 }
 
 //converts a date/time object in HH:MM:SS.MMM
-function getTimeString(time) {
+function getTimeString(time, showMillisecond) {
 	function pad10(n) {
 		return n < 10 ? '0' + n : n;
 	}
@@ -433,7 +444,7 @@ function getTimeString(time) {
 		return n < 10 ? '00' + n : (n < 100 ? '0' + n : n);
 	}
 	
-	return pad10(time.getHours()) + ":" + pad10(time.getMinutes()) + ":" + pad10(time.getSeconds()) + "." + pad100(time.getMilliseconds());
+	return pad10(time.getHours()) + ":" + pad10(time.getMinutes()) + ":" + pad10(time.getSeconds()) + (showMillisecond ? "." + pad100(time.getMilliseconds()) : "");
 }
 
 //converts a date/time object in YYYY-MM-DD HH:MM:SS
@@ -659,73 +670,24 @@ function getInstalledBuild(install_path, stream_name) {
 	}
 	return 0;
 }
-/*
-function getInstalledPTEBuild() {
-	if (fs.existsSync(path.join(constant.PA_PTE_DIR, "version.txt")) == true) {
-		var build = readFromFile(path.join(constant.PA_PTE_DIR, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
-		pahub.api.log.addLogMessage("info", "Planetary Annihilation PTE Build: " + build);
-		setConstant("PA_PTE_BUILD", build);
-		model.pte_build = ko.observable(constant.PA_PTE_BUILD);
-		if (model.streams().indexOf("PTE") == -1) {
-			model.streams.push("PTE");
-		}
-	}
-}
 
-function getInstalledStableBuild() {
-	if (fs.existsSync(path.join(constant.PA_STABLE_DIR, "version.txt")) == true) {
-		var build = readFromFile(path.join(constant.PA_STABLE_DIR, "version.txt")).toString().replace(/^\s+|\s+$/g, '');
-		if (model.steam() == true) {
-			pahub.api.log.addLogMessage("info", "Planetary Annihilation Steam Build: " + build);
-			if (model.streams().indexOf("STEAM") == -1) {
-				model.streams.push("STEAM");
-			}		
-		} else {
-			pahub.api.log.addLogMessage("info", "Planetary Annihilation Stable Build: " + build);
-			if (model.streams().indexOf("STABLE") == -1) {
-				model.streams.push("STABLE");
-			}
-		}
-		setConstant("PA_STABLE_BUILD", build);
-		model.stable_build = ko.observable(constant.PA_STABLE_BUILD);
-	}
-}
-*/
 function launchPA(stream) {
-    var child_process = require('child_process');
 	if (stream == "STEAM") {
 		shell.openExternal('steam://rungameid/233250')
 	} else {
 		if (streams[stream]) {
-			if (process.platform == "win32") {
-				shell.openExternal(streams[stream].bin);
-			} else {
-				child_process.exec(streams[stream].bin);
+			var child_process = require('child_process');
+			var path = require('path');
+			var binpath = streams[stream].bin;
+			var wd = path.dirname(binpath);
+			var args = [];
+			if (pahub.api.playfab.getSessionTicket()) {
+				args = ['--ticket', pahub.api.playfab.getSessionTicket()];
 			}
+			var child = child_process.spawn(binpath, args, {cwd: wd, detached: true, stdio: 'ignore' });
+			child.unref();
 		}
 	}
-	
-	/*
-	if (process.platform == "win32") {
-		if (stream == "STABLE") {
-			shell.openExternal(path.join(constant.PA_STABLE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
-		} 
-		if (stream == "PTE") {
-			shell.openExternal(path.join(constant.PA_PTE_DIR, "bin_" + constant.PA_ARCHITECTURE, "pa.exe"));
-		}
-	}
-	if (process.platform == "linux") {
-		child_process.exec(path.join(constant.PA_STABLE_DIR, "PA"));
-	}
-	if (process.platform == "darwin") {
-		if (stream == "STABLE") {
-			child_process.exec(path.join(constant.PA_STABLE_DIR, "PA"));
-		} 
-		if (stream == "PTE") {
-			child_process.exec(path.join(constant.PA_PTE_DIR, "PA"));
-		}
-	}
-	*/
 }
 
 function launchURL(url) {

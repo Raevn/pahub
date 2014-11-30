@@ -1,9 +1,16 @@
 var pahub = {
 	api: {
+		playfab: {
+			login: function(username, password) { model.login(username, password);},
+			logout: function() { model.logout();},
+			getSessionTicket: function() { return model.user.sessionTicket();},
+			getUser: function() { return model.user;}
+		},
 		section: {
 			addSection: function (section_id, display_name, img_src, location, index) { model.addSection(section_id, display_name, img_src, location, index); },
 			removeSection: function (section_id) { model.removeSection(section_id); },
-			setActiveSection: function (section_id) { model.setActiveSection(section_id); }
+			setActiveSection: function (section_id) { model.setActiveSection(section_id); },
+			getSection: function(section_id) { return model.getSection(section_id); }
 		},
 		tab: {
 			addTab: function (section_id, tab_id, display_name, img_src, index) { model.addTab(section_id, tab_id, display_name, img_src, index); },
