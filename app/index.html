@@ -43,15 +43,13 @@
 			</div>
 			<div id="container-sections-cont" style="height: 138px">	
 				<div id="wrapper-sections" class="wrapper">
-					<!-- ko if: model.stream() && model.streams().length > 0 -->
-						<div data-bind="click: function() { launchPA(model.stream())}" class="section section-first">
-							<div class="section-icon"><img src="assets/img/launch.png"/></div>
-							<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
-								<div class="section-display-name" data-bind="text: 'Play' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Play</div>
-							<!-- /ko -->
-						</div>
-					<!-- /ko -->
-					<div data-bind="style: {marginTop: ((model.stream() && model.streams().length > 0) ? '0px' : '48px')}, click: function() { close(); }" class="section" >
+					<div data-bind="style: {visibility: (model.stream() && model.streams().length > 0) ? 'visible' : 'hidden'}, click: function() { launchPA(model.stream())}" class="section section-first">
+						<div class="section-icon"><img src="assets/img/launch.png"/></div>
+						<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
+							<div class="section-display-name" data-bind="text: 'Play' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Play</div>
+						<!-- /ko -->
+					</div>
+					<div data-bind="click: function() { close(); }" class="section" >
 						<div class="section-icon"><img src="assets/img/exit.png"></div>
 						<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
 							<div class="section-display-name">Exit</div>
