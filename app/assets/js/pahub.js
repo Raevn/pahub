@@ -613,7 +613,7 @@ function getPAInstallPath() {
 						var stable_dir = path.join(installDir, "stable", "PA.app", "Contents", "MacOS");
 						var pte_dir = path.join(installDir, "PTE", "PA.app", "Contents", "MacOS");
 						
-						if (fs.existsSync(path.join(stable_dir, "version.txt")) == true) {
+						if (fs.existsSync(path.join(stable_dir, "../Resources", "version.txt")) == true) {
 							addStream(
 								"STABLE",
 								getInstalledBuild(stable_dir, "STABLE"),
@@ -622,7 +622,7 @@ function getPAInstallPath() {
 								path.join(stable_dir, "../Resources", "media", "stockmods")
 							);
 						}
-						if (fs.existsSync(path.join(pte_dir, "version.txt")) == true) {
+						if (fs.existsSync(path.join(pte_dir, "../Resources", "version.txt")) == true) {
 							addStream(
 								"PTE",
 								getInstalledBuild(pte_dir, "PTE"),
