@@ -294,9 +294,18 @@ function loadCorePlugins() {
 	}
 }
 
+function unsetConstant(key) {
+	if (constant.hasOwnProperty(key) == true) {
+		delete constant[key];
+		pahub.api.log.addLogMessage("debug", "Constant '" + key + "' unset");
+	} else {
+		pahub.api.log.addLogMessage("warn", "Failed to unset constant '" + key + "': constant does not exist");
+	}
+}
+
 function setConstant(key, value) {
 	constant[key] = value;
-	pahub.api.log.addLogMessage("verb", key + ": " + constant[key]);
+	pahub.api.log.addLogMessage("debug", "Constant '" + key + "' set: " + constant[key]);
 }
 
 // getMapItemIndex(object, attribute, itemValue)
@@ -344,7 +353,7 @@ function createLocKey(text) {
 }
 
 function writeJSONtoFile(file, data) {
-	writeToFile(file, JSON.stringify(data, null, 4).replace(/\r?\n/g, "\r\n"));
+	return writeToFile(file, JSON.stringify(data, null, 4).replace(/\r?\n/g, "\r\n"));
 }
 
 function writeToFile(file, data) {
@@ -352,7 +361,8 @@ function writeToFile(file, data) {
 		fs.writeFileSync(file, data);
 		return true;
 	} catch(err) {
-		pahub.api.log.addLogMessage("error", "Error writing to file: " + err);
+		pahub.api.log.addLogMessage("error", "Failed writing " + file);
+		pahub.api.log.addLogMessage("error", "Error " + err.number + ": " + err.description );
 		return false;
 	}
 }
@@ -457,6 +467,7 @@ function getDateTimeString(date) {
 
 function addStream(stream_name, build, dir, bin, stockmods) {
 	streams[stream_name] = {
+		name: stream_name,
 		build: build,
 		dir: dir,
 		bin: bin,

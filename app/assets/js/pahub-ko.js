@@ -177,11 +177,11 @@ $(document).ready(function () {
 				status: "",
 				processed: ko.observable(false)
 			});
-			pahub.api.log.addLogMessage("debug", "<CID #" + self.connections + "> Queuing resource load: " + getShortPathString(url));
 
 			if (local == true) {
 				setTimeout(function(resource) {self.downloadLocalResource(resource)}, 10, self.resource_queue()[self.resource_queue().length-1]);
 			} else {
+				pahub.api.log.addLogMessage("debug", "<CID #" + self.connections + "> Queuing resource load: " + getShortPathString(url));
 				setTimeout(function(resource) {self.downloadNetworkResource(resource)}, 10, self.resource_queue()[self.resource_queue().length-1]);
 			}
 		}
@@ -266,8 +266,6 @@ $(document).ready(function () {
 		}
 		
 		self.downloadLocalResource = function(resource) {
-			pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Loading local resource: '" + resource.name + "'");
-			
 			resource.data = readFromFile(resource.url);
 			
 			fs.stat(resource.url, function (err, stats) {
@@ -277,8 +275,6 @@ $(document).ready(function () {
 			resource.size(resource.completed());
 			resource.percent(1);
 			resource.status = "complete";
-			
-			pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Loading resource completed");
 			
 			self.processResourceQueue();
 		}
@@ -326,7 +322,7 @@ $(document).ready(function () {
 					pahub.api.log.addLogMessage("debug", "<CID #" + resource.cid + "> Loading resource completed");
 				})
 				.fail(function(data, textStatus, errorThrown) {
-					pahub.api.log.addLogMessage("error", "<CID #" + resource.cid + "> Error: " + errorThrown);	
+					pahub.api.log.addLogMessage("error", "<CID #" + resource.cid + "> Error: " + textStatus);	
 					
 					resource.status = "failed";
 				})
@@ -499,7 +495,18 @@ $(document).ready(function () {
 				
 		self.active_tab = ko.observable(); //make this computed, based on active_tab_id
 		self.active_tab_id = ko.observable("");
-		self.current_tabs = ko.observableArray();
+		
+		self.current_tabs = ko.computed({
+			read: function() {
+				var tabs_list = [];
+				if (model.active_section().hasOwnProperty("tabs") == true) {
+					tabs_list = model.active_section().tabs();
+				}
+				return tabs_list;
+			},
+			deferEvaluation: true
+		});
+		
 		
 		self.getSection = function(section_id) {
 			return self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)];
@@ -552,7 +559,6 @@ $(document).ready(function () {
 			if (self.sectionExists(section_id) == true) {
 				self.active_section_id(section_id);
 				self.active_section(self.sections()[getMapItemIndex(self.sections(), "section_id", section_id)]);
-				self.current_tabs(self.active_section().tabs());
 				if (self.sectionTabExists(section_id, self.active_tab_id()) == false) {
 					if (self.current_tabs().length > 0) {
 						self.setActiveTab(self.current_tabs()[0].tab_id);

@@ -10,14 +10,14 @@
 		</div>
 		<div id="container-tabs" class="container" data-bind="css:{'container-sections-minimised': pahub.api.gui.getSectionsBarMinimisedState()}">
 			<div id="wrapper-tabs" class="wrapper">
-				<!-- ko foreach: current_tabs -->
-					<!-- ko if: display_name || img_src -->
+				<!-- ko foreach: model.current_tabs() -->
+					<!-- ko if: $data.display_name() || $data.img_src -->
 						<div data-bind="attr: {id: 'tab-' + tab_id}, css: {'selected-tab': tab_id == model.active_tab_id()}, click: function(){model.setActiveTab(tab_id)}" class="tab">
-						<!-- ko if: img_src -->
-							<div class="tab-icon"><img data-bind="attr: {src: img_src}"></div>
+						<!-- ko if: $data.img_src -->
+							<div class="tab-icon"><img data-bind="attr: {src: $data.img_src}"></div>
 						<!-- /ko -->
-						<!-- ko if: display_name -->
-							<span class="tab-display-name" data-bind="text: model.current_loc_data()[loc_key] || display_name"></span> 
+						<!-- ko if: $data.display_name() -->
+							<span class="tab-display-name" data-bind="text: model.current_loc_data()[loc_key] || $data.display_name()"></span> 
 						<!-- /ko --> 
 						</div>
 					<!-- /ko -->
@@ -43,15 +43,13 @@
 			</div>
 			<div id="container-sections-cont" style="height: 138px">	
 				<div id="wrapper-sections" class="wrapper">
-					<!-- ko if: model.stream() && model.streams().length > 0 -->
-						<div data-bind="click: function() { launchPA(model.stream())}" class="section section-first">
-							<div class="section-icon"><img src="assets/img/launch.png"/></div>
-							<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
-								<div class="section-display-name" data-bind="text: 'Play' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Play</div>
-							<!-- /ko -->
-						</div>
-					<!-- /ko -->
-					<div data-bind="style: {marginTop: ((model.stream() && model.streams().length > 0) ? '0px' : '48px')}, click: function() { close(); }" class="section" >
+					<div data-bind="style: {visibility: (model.stream() && model.streams().length > 0) ? 'visible' : 'hidden'}, click: function() { launchPA(model.stream())}" class="section section-first">
+						<div class="section-icon"><img src="assets/img/launch.png"/></div>
+						<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
+							<div class="section-display-name" data-bind="text: 'Play' + ((model.stream() == 'PTE') ? ' (PTE)' : '') ">Play</div>
+						<!-- /ko -->
+					</div>
+					<div data-bind="click: function() { close(); }" class="section" >
 						<div class="section-icon"><img src="assets/img/exit.png"></div>
 						<!-- ko ifnot: pahub.api.gui.getSectionsBarMinimisedState() -->
 							<div class="section-display-name">Exit</div>
