@@ -55,7 +55,7 @@ function initPlatform() {
 		case 'darwin': // Mac OSX
 			setConstant("PA_DATA_DIR", path.join(process.env.HOME, 'Library/Application Support/Uber Entertainment/Planetary Annihilation')); 
 			// removing "MacOS/Atom Helper", leaving us at ..."Atom.app/Content"
-			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../..')));
+			setConstant("PAHUB_BASE_DIR", path.normalize(path.join(process.execPath, '../../../../..')));
 			// ..."Atom.app/Content/Resources"
 			setConstant("PAHUB_PACKAGE_FILE", path.join(process.resourcesPath, "app/package.json"));
 			break;
@@ -624,7 +624,7 @@ function getPAInstallPath() {
 						var stable_dir = path.join(installDir, "stable", "PA.app", "Contents", "MacOS");
 						var pte_dir = path.join(installDir, "PTE", "PA.app", "Contents", "MacOS");
 						
-						if (fs.existsSync(path.join(stable_dir, "version.txt")) == true) {
+						if (fs.existsSync(path.join(stable_dir, "../Resources", "version.txt")) == true) {
 							addStream(
 								"STABLE",
 								getInstalledBuild(stable_dir, "STABLE"),
@@ -633,7 +633,7 @@ function getPAInstallPath() {
 								path.join(stable_dir, "../Resources", "media", "stockmods")
 							);
 						}
-						if (fs.existsSync(path.join(pte_dir, "version.txt")) == true) {
+						if (fs.existsSync(path.join(pte_dir, "../Resources", "version.txt")) == true) {
 							addStream(
 								"PTE",
 								getInstalledBuild(pte_dir, "PTE"),
